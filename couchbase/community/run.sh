@@ -49,7 +49,8 @@ check_data_persistence() {
     echo "change data path owner to couchbase"
     chown -R couchbase $COUCHBASE_DATA
     echo "initializing node..."
-    start /opt/couchbase/bin/couchbase-cli node-init -c $ip:8091 -u "$COUCHBASE_USER" -p "$COUCHBASE_PASS" --node-init-data-path=$COUCHBASE_DATA
+    echo "node $COUCHBASE_HOST"
+    start /opt/couchbase/bin/couchbase-cli node-init -c "$COUCHBASE_HOST":8091 -u "$COUCHBASE_USER" -p "$COUCHBASE_PASS" --node-init-data-path=$COUCHBASE_DATA
   fi
 }
 
@@ -61,7 +62,8 @@ cluster_init() {
   fi
   check_data_persistence
   echo "initializing cluster..."
-  start /opt/couchbase/bin/couchbase-cli cluster-init -c $ip:8091 -u "$COUCHBASE_USER" -p "$COUCHBASE_PASS" --cluster-init-ramsize=$CLUSTER_RAM_SIZE --cluster-username="$COUCHBASE_USER" --cluster-password="$COUCHBASE_PASS"
+  echo "cluster $COUCHBASE_HOST"
+  start /opt/couchbase/bin/couchbase-cli cluster-init -c "$COUCHBASE_HOST":8091 -u "$COUCHBASE_USER" -p "$COUCHBASE_PASS" --cluster-init-ramsize=$CLUSTER_RAM_SIZE --cluster-username="$COUCHBASE_USER" --cluster-password="$COUCHBASE_PASS"
 }
 
 rebalance() {
@@ -90,6 +92,7 @@ main() {
 
   case "$1" in
     cluster-init)    start_couchbase && cluster_init && wait_for_shutdown;;
+    start)           start_couchbase && wait_for_shutdown;;
     rebalance)       start_couchbase && rebalance    && wait_for_shutdown;;
     *)               cli $@;;
   esac
