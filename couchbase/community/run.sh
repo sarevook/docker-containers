@@ -86,13 +86,21 @@ start_couchbase() {
   trap "/etc/init.d/couchbase-server stop" exit INT TERM
 }
 
+node_init() {
+    echo "waiting for couchbase to start (10 seconds)..."
+    sleep 10
+    echo "initializing node"
+    start /opt/couchbase/bin/couchbase-cli node-init -c $COUCHBASE_HOST:8091 -u "$COUCHBASE_USER" -p "$COUCHBASE_PASS" --node-init-hostname="$COUCHBASE_HOST" --node-init-data-path=$COUCHBASE_DATA
+    start /opt/couchbase/bin/couchbase-cli cluster-init -u "$COUCHBASE_USER" -p "$COUCHBASE_PASS" -c $COUCHBASE_HOST:8091 --cluster-username=$COUCHBASE_USER --cluster-password=$COUCHBASE_PASS --cluster-init-ramsize=$CLUSTER_RAM_SIZE
+}
+
 main() {
   set +e
   set -o pipefail
 
   case "$1" in
     cluster-init)    start_couchbase && cluster_init && wait_for_shutdown;;
-    start)           start_couchbase && wait_for_shutdown;;
+    node-init)       start_couchbase && node_init && wait_for_shutdown;;
     rebalance)       start_couchbase && rebalance    && wait_for_shutdown;;
     *)               cli $@;;
   esac
